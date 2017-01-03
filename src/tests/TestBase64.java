@@ -10,10 +10,10 @@ import com.captainredbeard.xor.Base64;
 public class TestBase64 {
 
     public static void main(String[] args) {
-        String message = "Hi, my name is Slim Shady!" +
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-                "abcdefghijklmnopqrstuvwxyz" +
-                "0123456789" +
+        String message = "Hi, my name is Slim Shady! " +
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ " +
+                "abcdefghijklmnopqrstuvwxyz " +
+                "0123456789 " +
                 "`~!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?";
         String encoded = new String(Base64.encode(message.getBytes()));
         String decoded = new String(Base64.decode(encoded.getBytes()));
