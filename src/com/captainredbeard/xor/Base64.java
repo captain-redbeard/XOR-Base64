@@ -2,7 +2,6 @@ package com.captainredbeard.xor;
 
 /**
  * Base64 implementation based on MiGBase64.
- * Note: Line separation has been removed.
  *
  * @author captain-redbeard
  * @version 1.00
@@ -72,7 +71,7 @@ public class Base64 {
      * @return byte[]
      */
     public static byte[] encodeByte(byte[] data, int pad) {
-        return encodeToByte(data, pad == 0 ? BASE_PAD : SAFE_PAD);
+        return encodeToByte(data, pad == 0 ? BASE_PAD : SAFE_PAD, true);
     }
 
     /**
@@ -103,19 +102,20 @@ public class Base64 {
      *
      * @param data - data to be encoded
      * @param pad - pad to use
+     * @param split - split lines
      * @return char[]
      */
-    private static byte[] encodeToByte(byte[] data, byte[] pad) {
+    private static byte[] encodeToByte(byte[] data, byte[] pad, boolean split) {
         //Assign lengths
-        int dataLength = data.length;
-        int evenLength = (dataLength / 3) * 3;
-        int characterCount = ((dataLength -1) / 3 + 1) << 2;
+        int evenLength = (data.length / 3) * 3;
+        int characterCount = ((data.length - 1) / 3 + 1) << 2;
+        int dataLength = characterCount + (split ? characterCount - 1 / 76 << 1 : 0);
 
         //Create empty array
         byte[] baseData = new byte[characterCount];
 
         //Encode data
-        for (int d = 0, b = 0; d < evenLength;) {
+        for (int d = 0, b = 0, c = 0; d < evenLength;) {
             //Copy next three bytes into lower 24 bits of int
             int bits = (data[d++] & 0xff) << 16 | (data[d++] & 0xff) << 8 | (data[d++] & 0xff);
 
@@ -124,12 +124,19 @@ public class Base64 {
             baseData[b++] = pad[(bits >>> 12) & 0x3f];
             baseData[b++] = pad[(bits >>> 6) & 0x3f];
             baseData[b++] = pad[bits & 0x3f];
+
+            //Line split
+            if (split && c++ == 19 && d < dataLength - 2) {
+                baseData[b++] = '\r';
+                baseData[b++] = '\n';
+                c = 0;
+            }
         }
 
         //Add padding
-        int left = dataLength - evenLength;
+        int left = data.length - evenLength;
         if(left > 0) {
-            int bits = ((data[evenLength] & 0xff) << 10) | (left == 2 ? ((data[dataLength - 1] & 0xff) << 2) : 0);
+            int bits = ((data[evenLength] & 0xff) << 10) | (left == 2 ? ((data[data.length - 1] & 0xff) << 2) : 0);
 
             //Set last four characters
             baseData[characterCount - 4] = pad[bits >> 12];
@@ -164,7 +171,7 @@ public class Base64 {
         //Create empty array
         byte[] rawData = new byte[length];
 
-        //Encode data
+        //Decode data
         for (d = 0; d < evenLength;) {
             //Assemble three bytes into an int from four valid characters
             int bits = pad[data[b++]] << 18 |
